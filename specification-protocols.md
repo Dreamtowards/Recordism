@@ -158,10 +158,36 @@ payload:
 
 
 
+### [CP] `api/access_list`
 
+payload:
+```json5
+{
+  site_id: 1,
+}
+```
 
-
-
+resp:
+```json5
+{
+  access_list: [
+    {
+      access_id: "",
+      time: "",
+      time_last_keepalive: "",
+      ip: "",
+      ip_info: {
+        country: "",
+        countryCode: "",
+        city: "",
+      },
+      fingerprint: "",
+      browser_cookie_uid: "",
+      
+    }
+  ]
+}
+```
 
 
 

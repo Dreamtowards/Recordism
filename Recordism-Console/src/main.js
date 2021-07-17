@@ -54,12 +54,12 @@ import "./assets/css/style.css";
 // API Networking Requestion
 function request(path, data, respf, errf, lcall = ()=>{}) {
     // setup AuthIdentify (tho may sometimes unnecessary).
-    data.uid = user.uid;
-    data.accessToken = user.accessToken;
+    // data.uid = user.uid;
+    // data.accessToken = user.accessToken;
     // request.
-            console.log("request. \npath:"+path+", data:"+JSON.stringify(data));
+    //         console.log("request. \npath:"+path+", data:"+JSON.stringify(data));
     return axios
-        .post("http://1.116.211.233:8003"+path, data)
+        .post("http://localhost:8010"+path, data)
         .then(resp => {
             console.log("request(responsed). \npath:"+path+", data:"+JSON.stringify(data)+", \nresp:"+JSON.stringify(resp.data));
             respf(resp.data);

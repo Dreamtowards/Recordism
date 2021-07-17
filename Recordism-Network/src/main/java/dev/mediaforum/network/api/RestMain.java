@@ -59,11 +59,11 @@ public class RestMain {
     @RequestMapping("access_init")
     public Map<String, Object> access_init(@RequestBody Map<String, Object> data, HttpServletRequest request) throws IOException {
         int siteId = (int)data.get("site_id");
+        String remoteIp = "183.217.174.226";//request.getRemoteAddr();
 
         AccessRecord r = new AccessRecord();
 
         r.accessId = UUID.randomUUID().toString();
-        r.ip = request.getRemoteAddr();
         r.time = System.currentTimeMillis();
         r.timeLastKeepalive = r.time;
 
@@ -91,14 +91,13 @@ public class RestMain {
         r.windowUrl = (String)dWindow.get("url");
         r.windowReferrerUrl = (String)dWindow.get("referrer_url");
 
-        recordRepository.saveAndFlush(r);
-
         // Check and Save IP Info.
-        if (ipRepository.findByIp(r.ip) == null) {
-            JSONObject rsIp = new JSONObject(HttpUtils.httpGet("http://ip-api.com/json/"+r.ip));
+        IpInfo ipInfo = ipRepository.findByIp(remoteIp);
+        if (ipInfo == null) {
+            JSONObject rsIp = new JSONObject(HttpUtils.httpGet("http://ip-api.com/json/"+remoteIp));
 
-            IpInfo ipInfo = new IpInfo();
-            ipInfo.ip = r.ip;
+            ipInfo = new IpInfo();
+            ipInfo.ip = remoteIp;
             ipInfo.country = rsIp.getString("country");
             ipInfo.countryCode = rsIp.getString("countryCode");
             ipInfo.region = rsIp.getString("regionName");
@@ -112,6 +111,9 @@ public class RestMain {
 
             ipRepository.saveAndFlush(ipInfo);
         }
+
+        r.ip = ipInfo;
+        recordRepository.saveAndFlush(r);
 
         return CollectionUtils.asMap(
                 "access_id", r.accessId);
@@ -144,6 +146,18 @@ public class RestMain {
 
         recordRepository.save(ar);
     }
+
+
+    @RequestMapping("access_list")
+    public List<AccessRecord> access_list(@RequestBody Map<String, Object> data) {
+        int siteId = (int)data.get("site_id");
+
+        List<AccessRecord> ls = recordRepository.findAllBySiteId(siteId);
+
+        return ls;
+    }
+
+
 
     public static boolean isOnline(AccessRecord r) {
         return System.currentTimeMillis() - r.timeLastKeepalive  < 18;

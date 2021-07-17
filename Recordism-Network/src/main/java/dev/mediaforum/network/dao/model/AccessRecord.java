@@ -1,6 +1,10 @@
 package dev.mediaforum.network.dao.model;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
+
 import javax.persistence.*;
 
 @Entity
@@ -10,13 +14,18 @@ public class AccessRecord {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
+    @JsonIgnore
     public int id;
 
     public String accessId;  // every accessId identify an AccessRecord.
 
+    @JsonIgnore
     public int siteId;
 
-    public String ip;
+    @ManyToOne
+    @JoinColumn(name = "ip")
+    @JsonProperty("ip_info")
+    public IpInfo ip;
 
     public long time;
     public long timeLastKeepalive;  // 0, or available.

@@ -51,7 +51,7 @@ async function _init_onstart() {
 
     function _ut_RcdRequestAPI(api, data, respcallback = r=>{}) {
         var xhr = new XMLHttpRequest();
-        xhr.open("POST", "http://dalao.world:8010"+api, true);
+        xhr.open("POST", "http://localhost:8010"+api, true);
         xhr.setRequestHeader('Content-Type', 'application/json');
         xhr.onreadystatechange = function () {
             if (this.status === 200) {

@@ -11,68 +11,62 @@
       <span class="color-text-secondary" style="vertical-align: super">Everything your tech support team need to know!</span>
     </div>
 
-    <div style="height: 300px;border-radius: 10px;">
+    <div class="page-navbar">
+      <a href="#">Console</a> / <a>Overview</a>
+      <input type="text" placeholder="Search" class="float-right search" style="margin-top: -3px;">
+    </div>
 
-      <div class="page-navbar">
-        <a href="#">Console</a> / <a>Overview</a>
-        <input type="text" placeholder="Search" class="float-right search" style="margin-top: -3px;">
+    <div style="margin: 0 auto;margin-top: 24px;text-shadow: #fff 0 1px 0;">
+      <div class="card-dash-info col-3">
+        <h6  class="color-text-secondary">Online Users</h6>
+        <h2>31</h2>
       </div>
-
-      <div style="margin: 0 auto;margin-top: 24px;text-shadow: #fff 0 1px 0;">
-        <div class="card-dash-info col-3">
-          <h6  class="color-text-secondary">Online Users</h6>
-          <h2>31</h2>
-        </div>
-        <div class="card-dash-info col-4">
-          <h6  class="color-text-secondary">Today Pageviews</h6>
-          <h2 style="">52</h2>
-        </div>
-        <div class="card-dash-info col-4">
-          <h6  class="color-text-secondary">Today Viewers</h6>
-          <h2 style="">31</h2>
-        </div>
+      <div class="card-dash-info col-4">
+        <h6  class="color-text-secondary">Today Pageviews</h6>
+        <h2 style="">52</h2>
       </div>
+      <div class="card-dash-info col-4">
+        <h6  class="color-text-secondary">Today Viewers</h6>
+        <h2 style="">31</h2>
+      </div>
+    </div>
 
 <!--      <div>-->
 <!--        come Sources Chart-->
 <!--      </div>-->
 
-      <div style="font-size: 90%">
-        <h4>Recent Access</h4>
-        <a class="ui button">Button</a>
-        <table class="ui  table">
+    <div style="font-size: 90%">
+      <h4>Recent Access</h4>
+      <table class="ui single line table">
+        <thead>
           <tr>
             <th>Time</th>
             <th>Location</th>
             <th>Duration</th>
-            <th title="User Browser Fingerprint">FP</th>
-            <th>CUID</th>
-            <th>BTZ</th>
-            <th>BLG</th>
-            <th>DVC</th>
+            <th title="User Browser Fingerprint\nBrowser Cookie User ID">FP / CUID</th>
+            <th>BTZ/BLG</th>
             <th>Browser</th>
             <th>OS</th>
             <th>Screen BH</th>
             <th>IP</th>
           </tr>
-          <tr>
-            <td>2021-07-21</td>
+        </thead>
+        <tbody>
+          <tr v-for="access_item in access_list">
+            <td>2021-07-21 {{access_item.access_id}}</td>
             <td>🇹🇴&nbsp; Taipei, Taiwan</td>
             <td>12min *alive</td>
-            <td>b59581...</td>
-            <td>345eb4...</td>
-            <td>Asia/Shanghai</td>
-            <td>en(en,zh-CN,zh)</td>
-            <td>MacIntel</td>
+            <td>b5958135...<br>34535eb4...</td>
+            <td>Asia/Shanghai<br>en(en,zh-CN,zh)</td>
             <td>Chrome 89.2</td>
-            <td>Win10</td>
-            <td>2K<sup>2560x1440</sup> B/80%</td>
+            <td>Win10<br><small>MacIntel</small></td>
+            <td>2K<sup>2560x1440</sup><br>B/80%</td>
             <td>1.42.51.148</td>
           </tr>
-        </table>
-      </div>
-
+        </tbody>
+      </table>
     </div>
+    <a class="ui button" @click="load_access_list">Refresh</a>
 
     <br><br><br>
     <p style="font-size: 12px;color: #888;">© Copyright 2021 <a href="#">Recordism</a> | <a href="#">Privacy Policy</a></p>
@@ -82,8 +76,25 @@
 </template>
 
 <script>
+
+import {request} from "../main.js";
+
 export default {
-  name: "Overview"
+  name: "Overview",
+  data() {return{
+    access_list: []
+  }},
+  methods: {
+    load_access_list() {
+      request("/api/access_list", {site_id: 1}, resp => {
+        this.access_list = resp.access_list;
+      })
+    }
+  },
+  mounted() {
+
+    this.load_access_list();
+  }
 }
 </script>
 
