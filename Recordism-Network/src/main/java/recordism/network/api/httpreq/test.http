@@ -1,4 +1,4 @@
-POST https://localhost:8010/api/access_list
+POST http://localhost:8010/api/site_heatmap
 Accept: */*
 Content-Type: application/json; charset=utf-8
 Cache-Control: no-cache

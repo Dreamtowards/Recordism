@@ -7,7 +7,7 @@ import javax.persistence.*;
 import java.util.List;
 
 @Entity
-@Table(name = "ip_infos")
+@Table(name = "ip")
 public class IpInfo {
 
     @Id

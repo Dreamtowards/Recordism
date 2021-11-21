@@ -1,13 +1,8 @@
 package recordism.network.api;
 
 import org.json.JSONArray;
-import recordism.network.dao.EventRepository;
-import recordism.network.dao.IpRepository;
-import recordism.network.dao.RecordRepository;
-import recordism.network.dao.model.AccessEvent;
-import recordism.network.dao.model.AccessRecord;
-import recordism.network.dao.model.IpInfo;
-import recordism.network.dao.UserRepository;
+import recordism.network.dao.*;
+import recordism.network.dao.model.*;
 import recordism.network.externalutil.CollectionUtils;
 import recordism.network.externalutil.HttpUtils;
 import org.json.JSONObject;
@@ -54,13 +49,19 @@ public class RestMain {
         return sb.toString();
     }
 
+
+    /**
+     * =========================================
+     *             WEB TAG REQUESTS
+     * =========================================
+     */
+
     @RequestMapping("access_init")
     public Map<String, Object> access_init(@RequestBody Map<String, Object> _d, HttpServletRequest request) throws IOException {  JSONObject data = new JSONObject(_d);
         int siteId = data.getInt("site_id");
-        String remoteIp = "183.217.174.226";//request.getRemoteAddr();
+        String remoteIp = "118.212.191.246";//"183.217.174.226";//request.getRemoteAddr();
 
         AccessRecord r = new AccessRecord();
-
         r.accessId = UUID.randomUUID().toString();
         r.time = System.currentTimeMillis();
         r.timeLastKeepalive = r.time;
@@ -115,7 +116,7 @@ public class RestMain {
             ipRepository.saveAndFlush(ipInfo);
         }
 
-        r.ipInfo = ipInfo;
+        r.ip = ipInfo;
         recordRepository.saveAndFlush(r);
 
         return CollectionUtils.asMap(
@@ -123,23 +124,22 @@ public class RestMain {
     }
 
 
-    @RequestMapping("push_event")
-    public void push_event(@RequestBody Map<String, Object> data) {
-        String accessId = (String)data.get("access_id");
+    @RequestMapping("event_push")
+    public void push_event(@RequestBody Map<String, Object> _d) { JSONObject data = new JSONObject(_d);
+        String accessId = data.getString("access_id");
 
         AccessEvent e = new AccessEvent();
         e.time = System.currentTimeMillis();
-
-        e.accessRecord = recordRepository.findByAccessId(accessId);
-        e.name = (String)data.get("event_name");
-        e.eventData = new JSONObject((Map<String, Object>)data.get("event_data")).toString(0);
-        e.browserTime = (long)data.get("browser_time");
+        e.access = recordRepository.findByAccessId(accessId);
+        e.name = data.getString("event_type");
+        e.eventData = data.getJSONObject("event_data").toString(0);
+        // e.browserTime = (long)data.get("browser_time");
 
         eventRepository.save(e);
     }
 
 
-    @RequestMapping("keepalive")
+    @RequestMapping("access_keepalive")
     public void keepalive(@RequestBody Map<String, Object> data) {
         String accessId = (String)data.get("access_id");
 
@@ -150,6 +150,12 @@ public class RestMain {
         recordRepository.save(ar);
     }
 
+
+    /**
+     * =========================================
+     *                   ACCESS
+     * =========================================
+     */
 
     @RequestMapping("access_list")
     public List<AccessRecord> access_list(@RequestBody Map<String, Object> _d) {  JSONObject data = new JSONObject(_d);
@@ -188,6 +194,106 @@ public class RestMain {
         return page.getContent();
     }
 
+
+    /**
+     * =========================================
+     *                   USER
+     * =========================================
+     */
+
+    @RequestMapping("user_register")
+    public Map<String, Object> userRegister(@RequestBody Map<String, Object> _d) { JSONObject data = new JSONObject(_d);
+
+        String username = data.getString("username");
+        String passwordDigest = data.getString("password_digest");
+
+        if (userRepository.findByUsername(username) != null)
+            throw new RuntimeException("This Email already existed.");
+
+        User usr = new User();
+        usr.username = username;
+        usr.passwordDigest = passwordDigest;
+        usr.registerTime = System.currentTimeMillis();
+        userRepository.saveAndFlush(usr);
+
+        return CollectionUtils.asMap(
+                "user_id", usr.id
+        );
+    }
+
+    @Autowired
+    private LoginRepository loginRepository;
+
+    @RequestMapping("user_login")
+    public Map<String, Object> userLogin(@RequestBody Map<String, Object> _d) { JSONObject data = new JSONObject(_d);
+
+        String account = data.getString("account");
+        String passwordDigest = data.getString("password_digest");
+
+        User user;
+        if ((user=userRepository.findByUsername(account)) == null)
+            throw new RuntimeException("Account not found.");
+
+        if (!user.passwordDigest.equals(passwordDigest))
+            throw new RuntimeException("Incorrect password");
+
+        String token = UUID.randomUUID().toString();
+        Login login = new Login();
+        login.user = user;
+        login.token = token;
+        login.time = System.currentTimeMillis();
+        loginRepository.saveAndFlush(login);
+
+        return CollectionUtils.asMap(
+                "token", token
+        );
+    }
+
+    private User checkUser(Map<String, Object> d) {
+        String token = (String)d.get("token");
+
+        Login l = loginRepository.findByToken(token);
+        if (l == null)
+            throw new RuntimeException("Invalid session.");
+
+        return l.user;
+    }
+
+
+    @RequestMapping("user_profile")
+    public User userProfile(@RequestBody Map<String, Object> _d) { JSONObject data = new JSONObject(_d);
+        return checkUser(_d);
+    }
+
+    /**
+     * =========================================
+     *                   SITE
+     * =========================================
+     */
+
+    @Autowired
+    private SiteRepository siteRepository;
+
+    @RequestMapping("site_new")
+    public Map<String, Object> siteNew(@RequestBody Map<String, Object> _d) { JSONObject data = new JSONObject(_d);
+        User user = checkUser(_d);
+
+        String siteAddress = data.getString("site_address");
+
+        if (siteRepository.findByAddress(siteAddress) != null)
+            throw new RuntimeException("This site address already existed.");
+
+        Site site = new Site();
+        site.user = user;
+        site.address = siteAddress;
+        siteRepository.saveAndFlush(site);
+
+        return CollectionUtils.asMap(
+                "site_id", site.id
+        );
+    }
+
+    // TEMP
     @RequestMapping("site_overview")
     public Map<String, Object> site_metrics(@RequestBody Map<String, Object> data) {
 
@@ -198,6 +304,17 @@ public class RestMain {
         return CollectionUtils.asMap(
                 "online_users", 1,
                 "online_pages", numOnlinePages
+        );
+    }
+
+
+
+
+    @RequestMapping("site_heatmap")
+    public Map<String, Object> siteHeatmap(@RequestBody Map<String, Object> _d) { JSONObject data = new JSONObject(_d);
+
+        return CollectionUtils.asMap(
+                "heatmap", siteRepository.queryHeatmap()
         );
     }
 

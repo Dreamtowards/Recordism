@@ -30,17 +30,27 @@ var user = {
     token: Cookies.get("token"),
     uid: undefined,
     username: undefined,
-    avatar_url: ""
+    avatar_url: "",
+    sites: []
 };
 function userLogin(token) {
     Cookies.set("token", token, {expires: 10});
+    user.token = token;
 }
 function userUpdate() {
-    request("/api/user_info", {}, resp => {
+    request("/user_profile", {}, resp => {
 
         user.uid = resp.uid;
-        user.name = resp.username;
-    })
+        user.username = resp.username;
+        user.sites = resp.sites;
+    }, err => {
+        user.token = undefined;
+    });
+}
+function userLogout() {
+
+    user.token = undefined;
+    Cookies.remove("token");
 }
 
 // API Networking Requestion
@@ -48,14 +58,14 @@ function request(path, data, respf, errf, lcall = ()=>{}) {
     data.token = user.token;
     // request.console.log("request. \npath:"+path+", data:"+JSON.stringify(data));
     return axios
-        .post(true ? "http://localhost:8010"+path : "https://dalao.world"+path, data)
+        .post(true ? "http://localhost:8010/api"+path : "https://dalao.world/api"+path, data)
         .then(resp => {
             // console.log("request(responsed). \npath:"+path+", data:"+JSON.stringify(data)+", \nresp:"+JSON.stringify(resp.data));
             respf(resp.data);
         }).catch(ex => {
             if (ex.response) {
                 if (errf == null) {
-                   errf = err=>showToast("UncaughtedNetException: "+err.message)
+                   errf = err=>showToast("Error: "+err.message)
                 }
                 errf(ex.response.data);
             }
@@ -66,8 +76,11 @@ function request(path, data, respf, errf, lcall = ()=>{}) {
 
 
 
-import Console from "./components/Console.vue";
 import Overview from "./components/Overview.vue";
+import Profile from "./components/UserProfile.vue";
+
+import UserRegister from "./components/UserRegister.vue";
+import UserLogin from "./components/UserLogin.vue";
 
 // import SignRegister from "./components/auth/SignRegister.vue";
 // import SignLogin from "./components/auth/SignLogin.vue";
@@ -81,23 +94,12 @@ import Overview from "./components/Overview.vue";
 
 let router = new VueRouter({
     routes: [
-        // {path: "/register", component: SignRegister},
-        // {path: "/login", component: SignLogin},
-        {
-            path: "/",
-            component: Overview,
-        },
-        {
-            path: "/console",
-            component: Console,
-            // children: [
-            //     {path: "", component: HomeStreaming},
-            //     {path: "/feed/trending", component: ErrorPage404},
-            //     {path: "/feed/subscriptions", component: ErrorPage404},
-            //     {path: "/feed/library", component: ErrorPage404},
-            //     {path: "/savelist", component: SavelistPage, props: route => ({savelist_id: parseInt(route.query.list)})},
-            // ]
-        },
+        {path: "/register", component: UserRegister},
+        {path: "/login", component: UserLogin},
+        {path: "/site/:site_id", component: Overview, props: (route) => {
+                return { site_id: Number.parseInt(route.params.site_id) }
+            }},
+        {path: "/profile", component: Profile}
         // {path: "*", component: ErrorPage404}
     ]
 });
@@ -113,4 +115,4 @@ function showToast(msg) {
     vm.pollToast(msg);
 }
 
-export {user, request, showToast};
+export {user, request, showToast, userLogin, userUpdate, userLogout};

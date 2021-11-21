@@ -8,7 +8,7 @@ import javax.persistence.*;
 import java.util.List;
 
 @Entity
-@Table(name = "access_records")
+@Table(name = "access")
 public class AccessRecord {
 
     @Id
@@ -23,13 +23,12 @@ public class AccessRecord {
     public int siteId;
 
     @ManyToOne
-    @JoinColumn(name = "ip_info")
     @JsonProperty("ip_info")
-    public IpInfo ipInfo;
+    public IpInfo ip;
 
     @OneToMany
-    @JoinColumn(name = "access_record")
-    public List<AccessEvent> accessEvents;
+    @JoinColumn(name = "access_id")
+    public List<AccessEvent> events;
 
     public long time;
     public long timeLastKeepalive;  // 0, or available.

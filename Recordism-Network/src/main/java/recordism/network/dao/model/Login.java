@@ -3,8 +3,8 @@ package recordism.network.dao.model;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "site")
-public class Site {
+@Table(name = "login")
+public class Login {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -14,6 +14,8 @@ public class Site {
     @ManyToOne
     public User user;
 
-    public String address;
+    public String token;
+
+    public long time;
 
 }

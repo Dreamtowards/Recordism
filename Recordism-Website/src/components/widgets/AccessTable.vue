@@ -44,7 +44,8 @@
             <span class="align-middle me-sm-1" style="font-size: 18px;" title="IP Location Flag">{{utGetFlagEmoji(access_item.ip_info.country_code)}}</span>
             <div class="d-inline-block align-middle">
               <span class="v-align-text-bottom" title="IP Location">{{access_item.ip_info.city ? (access_item.ip_info.city+", "+access_item.ip_info.country) : "Unknown"}}</span><br>
-              <small style="font-size: 10px;" class="color-text-secondary" title="Browser Timezone & Languages">Asia/Shanghai, [en] zh-CN zh</small>
+              <small style="font-size: 10px;" class="color-text-secondary" title="Browser Timezone & Languages">
+                {{access_item.browser_timezone}}, [{{access_item.browser_language}}] {{access_item.browser_languages.replace(access_item.browser_language, '').replaceAll(',', ' ').trim()}}</small>
 
               <span v-if="access_item.window_referrer" style="font-size: 9px;color: #aaa" class="d-block code smaller-text align-top">from: {{ access_item.window_referrer }}</span>
             </div>
@@ -96,7 +97,7 @@
           <td class="td-collapsing align-middle" style="min-width: 128px">
             <span class="align-middle" :style="{color: (access_item.still_keepalive = Date.now() - access_item.time_last_keepalive < 20000) ? 'green' : 'black'}">
               {{ utTextDurationTimeHMS((access_item.time_last_keepalive - access_item.time)/1000) }}
-              [{{ access_item.access_events.length }}]
+              [{{ access_item.events.length }}]
             </span>
 
             <button class="btn float-end py-0" @click="toggle_detail_display($refs['detailbox'][idx], $event.currentTarget)" >
@@ -132,10 +133,10 @@
               <hr>
 
               <br>
-              <h3>Events: <small>({{ access_item.access_events.length }})</small></h3>
+              <h3>Events: <small>({{ access_item.events.length }})</small></h3>
               <br>
 
-              <div v-for="event_item in access_item.access_events">
+              <div v-for="event_item in access_item.events">
                 <div class="timeline-item timeline-item-condensed">
                   <div v-if="event_item.name === 'load_complete'" class="timeline-item-badge">
                     <svg class="octicon octicon-flame" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M5.05.31c.81 2.17.41 3.38-.52 4.31C3.55 5.67 1.98 6.45.9 7.98c-1.45 2.05-1.7 6.53 3.53 7.7-2.2-1.16-2.67-4.52-.3-6.61-.61 2.03.53 3.33 1.94 2.86 1.39-.47 2.3.53 2.27 1.67-.02.78-.31 1.44-1.13 1.81 3.42-.59 4.78-3.42 4.78-5.56 0-2.84-2.53-3.22-1.25-5.61-1.52.13-2.03 1.13-1.89 2.75.09 1.08-1.02 1.8-1.86 1.33-.67-.41-.66-1.19-.06-1.78C8.18 5.31 8.68 2.45 5.05.32L5.03.3l.02.01z"></path></svg>
@@ -147,14 +148,24 @@
                     <span class="fw-bold">
                       {{ utTextDurationTimeHMS((event_item.time - access_item.time)/1000) }} ::
                     </span>
-                    <div class="d-inline-block align-top">
+                    <div class="d-inline-block align-top w-75">
                       <i>{{ event_item.name }}</i><br>
-                      <span style="font-size: 11px;">
-                        <span v-if="event_item.name === 'load_complete'">Used time: {{ (event_item.event_data.used_time / 1000).toFixed(2) }}s</span>
-                        <span v-if="event_item.name === 'visibility_changed'">To <span :style="{color: event_item.event_data.to==='visible'?'#a9c877':'#aca4a4'}">{{ event_item.event_data.to.toUpperCase() }}</span></span>
-                        <span v-else-if="event_item.name === 'url_changed'"><br><br>From: {{ event_item.event_data.old_url }} <br>// To: &nbsp; {{ event_item.event_data.new_url }}</span>
-                        <span v-else-if="event_item.name === 'link_click'"><br><br>Current: {{ event_item.event_data.current_url }} <br>// Target:&nbsp; {{ event_item.event_data.target_url }}</span>
-                      </span>
+                      <div style="font-size: 11px;">
+                        <span v-if="event_item.name === 'load_complete'">
+                          Used time: {{ (event_item.event_data.used_time / 1000).toFixed(2) }}s
+                        </span>
+                        <span v-if="event_item.name === 'visibility_changed'">
+                          To <span :style="{color: event_item.event_data.to==='visible'?'#a9c877':'#aca4a4'}">{{ event_item.event_data.to.toUpperCase() }}</span>
+                        </span>
+                        <span v-else-if="event_item.name === 'url_changed'">
+                          From: {{ event_item.event_data.old_url }} <br>
+                          To: &nbsp; {{ event_item.event_data.new_url }}
+                        </span>
+                        <div v-else-if="event_item.name === 'link_click'">
+                          <span class="d-inline-block" style="width: 50px">Current:</span><a class="d-inline-block w-75 align-top" style="word-break: break-all" :href="event_item.event_data.current_url">{{ event_item.event_data.current_url }}</a><br>
+                          <span class="d-inline-block" style="width: 50px">Target:</span><a class="d-inline-block w-75 align-top" style="word-break: break-all" :href="event_item.event_data.target_url">{{ event_item.event_data.target_url }}</a>
+                        </div>
+                      </div>
                     </div>
 
 
@@ -248,7 +259,7 @@ export default {
   methods: {
     request_access_list() {
       this.$refs.btn_search.classList.add("loading");
-      request("/api/access_list", {
+      request("/access_list", {
         site_id: this.site_id,
         search_params: this.search_params
       }, resp => {

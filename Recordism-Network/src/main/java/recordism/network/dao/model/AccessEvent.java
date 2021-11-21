@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonRawValue;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "access_events")
+@Table(name = "event")
 public class AccessEvent {
 
     @Id
@@ -15,15 +15,15 @@ public class AccessEvent {
     public int id;
 
     @ManyToOne
-    @JoinColumn(name = "access_record")
     @JsonIgnore
-    public AccessRecord accessRecord;
+    public AccessRecord access;
 
     public String name;  // Event Type Name.
     public long time;  // Server Time.
-    public long browserTime;
+//    public long browserTime;
 
     @JsonRawValue
+    @Lob
     public String eventData;
 
 }

@@ -1,9 +1,12 @@
 package recordism.network.dao.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import javax.persistence.*;
+import java.util.List;
 
 @Entity
-@Table(name = "users")
+@Table(name = "user")
 public class User {
 
     @Id
@@ -19,4 +22,12 @@ public class User {
 
     public long registerTime;
 
+    @OneToMany
+    @JoinColumn(name = "user_id")
+    @JsonIgnoreProperties("user")
+    private List<Site> sites;
+
+    public List<Site> getSites() {
+        return sites;
+    }
 }

@@ -62,9 +62,9 @@ async function _rcd_init(site_id) {
         };
         xhr.send(JSON.stringify(data));
     }
-    function _ut_apiPushEvent(eventname, eventdata) {
-        _ut_RcdRequestAPI("/api/push_event", {
-            event_name: eventname,
+    function _ut_apiPushEvent(eventtype, eventdata) {
+        _ut_RcdRequestAPI("/api/event_push", {
+            event_type: eventtype,
             event_data: eventdata,
             access_id: ACCESS_ID,
             browser_time: Date.now()
@@ -115,7 +115,7 @@ async function _rcd_init(site_id) {
     while (!ACCESS_ID) {
         await _ut_sleep(100);
     }
-    console.log("Fine Loaded "+ACCESS_ID)
+    console.log("Fine Loaded "+ACCESS_ID);
 
     // EVENT "load_complete"
     window.addEventListener('load', e => {
@@ -162,7 +162,7 @@ async function _rcd_init(site_id) {
 
     // Keepalive
     setInterval(() => {
-        _ut_RcdRequestAPI("/api/keepalive", {
+        _ut_RcdRequestAPI("/api/access_keepalive", {
             access_id: ACCESS_ID
         });
     }, 6000);

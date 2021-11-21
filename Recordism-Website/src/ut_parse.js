@@ -14,6 +14,27 @@ function utTextDurationTimeHMS(sec) {
     let h = Math.floor(sec / 60 / 60);
     return uiText00(h)+":"+uiText00(m)+":"+uiText00(s);
 }
+function utTextDurationTimeText(sec) {
+    const SECOND=1, MINUTE=60*SECOND, HOUR=60*MINUTE, DAY=24*HOUR,
+          WEEK=7*DAY, MONTH=30*DAY, YEAR=12*MONTH;
+    const UNITS = {
+        'second': 1, 'minute': 60, 'hour': 60*60, 'day': 60*60*24,
+        'week': 60*60*24*7, 'month': 60*60*24*30, 'year': 60*60*24*30*12};
+
+    let val;
+    let lastUnit = SECOND;
+    for (let uname in UNITS) {
+        if (sec < UNITS[uname]) {
+            val = sec / lastUnit;
+            break;
+        } else {
+            lastUnit = uname;
+        }
+    }
+
+    let n = (sec/UNITS[lastUnit]).toFixed(0);
+    return n + " " + lastUnit + (n > 1 ? 's' : '');
+}
 function uiText00(n) {
     if (n < 10)
         return "0"+n;
@@ -355,4 +376,4 @@ function utParseUA(ua) {
 
 export {
     utGetFlagEmoji, utTextDurationTimeHMS, utTextTimeYMD, utTextTimeHMAPM,
-    utHexColorHashString, utParseUA, utSimpleVersion, utResolutionName}
+    utHexColorHashString, utParseUA, utSimpleVersion, utResolutionName, utTextDurationTimeText}
