@@ -1,0 +1,12 @@
+POST https://localhost:8010/api/access_list
+Accept: */*
+Content-Type: application/json; charset=utf-8
+Cache-Control: no-cache
+
+{
+  "site_id": 1,
+  "search_params": {
+    "useragent": "Mac"
+  }
+}
+###
