@@ -40,8 +40,9 @@ import Dashboard from "./widgets/Dashboard.vue";
 import StatisticsPanel from "./widgets/StatisticsPanel.vue";
 
 
-import "../assets/css/morris.css";
-import "../assets/js/morris.js";
+
+import "../assets/css/c3.css";
+import "../assets/js/c3.js";
 
 export default {
   name: "Overview",

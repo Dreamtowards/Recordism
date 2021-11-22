@@ -318,6 +318,27 @@ public class RestMain {
         );
     }
 
+
+    @RequestMapping("site_audience_visitations")
+    public Map<String, Object> siteVisitsNum(@RequestBody Map<String, Object> _d) { JSONObject data = new JSONObject(_d);
+
+        long interval = data.getLong("interval");
+
+        return CollectionUtils.asMap(
+                "sample", siteRepository.queryAudienceVisitations(interval)
+        );
+    }
+
+    @RequestMapping("site_preferences_analysis")
+    public Map<String, Object> siteVisitsPref(@RequestBody Map<String, Object> _d) { JSONObject data = new JSONObject(_d);
+
+        long interval = data.getLong("interval");
+
+        return CollectionUtils.asMap(
+                "sample", siteRepository.queryPreferencesAnalysis(interval)
+        );
+    }
+
     public static boolean isBlank(String s) {
         return s==null || s.isEmpty();
     }

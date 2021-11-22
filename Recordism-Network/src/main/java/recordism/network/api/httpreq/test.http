@@ -1,12 +1,9 @@
-POST http://localhost:8010/api/site_heatmap
+POST http://localhost:8010/api/site_preferences_analysis
 Accept: */*
 Content-Type: application/json; charset=utf-8
 Cache-Control: no-cache
 
 {
-  "site_id": 1,
-  "search_params": {
-    "useragent": "Mac"
-  }
+  "interval": 10000
 }
 ###
