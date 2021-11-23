@@ -90,7 +90,7 @@
         </div>
       </div>
       <div>
-        <audience-preferences-analysis></audience-preferences-analysis>
+        <audience-preferences-analysis ref="prefanal"></audience-preferences-analysis>
       </div>
       <div>
         Language and Timezone
@@ -140,12 +140,14 @@ export default {
       const initFunc = [
         this.setupGeolocationMap,
         this.setupAudienceVisitations,
-        this.setupPreferencesAnalysis,
+        this.$refs.prefanal.setup,
         alert,
         alert
       ];
       if (!this.initializedPanels.includes(idx)) {
+
         initFunc[idx]();
+
         this.initializedPanels.push(idx);
       }
     },
@@ -304,13 +306,6 @@ export default {
 
       this.switchPanel(to);
     },
-    prefanalUseSubchart(to) {
-
-      if (to)
-        this.chartPreferencesAnalysis.subchart.show();
-      else
-        this.chartPreferencesAnalysis.subchart.hide();
-    }
   }
 }
 </script>

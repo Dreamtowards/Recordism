@@ -3,10 +3,7 @@
   <div id="chart-preferences-analysis" class="mt-3 me-4 ms-2 pb-2" style="height: 320px;"></div>
   <div class="d-block float-end me-3" style="margin-top: -335px;position: relative;">
     <button class="btn align-top" :class="{'active': useSubchart}" @click="useSubchart=!useSubchart">Subchart</button>
-    <div class="d-inline-block btn-group">
-      <button class="btn">Visits</button>
-      <button class="btn">Visitors</button>
-    </div>
+
     <select style="width: 100px;" class="btn align-top" title="Interval" @change="requestSitePreferencesAnalysis" v-model="intervalSec">
       <option :value="60*60">1 hour</option>
       <option :value="60*60*8">8 hours</option>
@@ -15,6 +12,11 @@
       <option :value="60*60*24*30">1 month</option>
       <option :value="60*60*24*30*3">3 months</option>
       <option :value="60*60*24*30*12">1 year</option>
+    </select>
+    <select style="width: auto;" class="btn align-top" title="Target" @change="requestSitePreferencesAnalysis">
+      <option>Visits</option>
+      <option>Visitors by IP</option>
+      <option>Visitors by CID</option>
     </select>
     <select class="btn align-top" style="width: auto;">
       <option>Country</option>
@@ -47,7 +49,7 @@ export default {
   data() {return {
     intervalSec: 60*60,
     useSubchart: false,
-    theChart: undefined,
+    theChart: undefined
   }},
   methods: {
 
@@ -55,43 +57,16 @@ export default {
     requestSitePreferencesAnalysis() {
 
       request("/site_preferences_analysis", {
-        interval: 1000*this.prefanalIntervalSec
+        interval: 1000*this.intervalSec
       }, resp => {
-
-        // let data = [];
-        // let keys = [];
-        //
-        // for (let samp of resp.sample) {
-        //   let dataI = -1;  // existed.
-        //   for (let i in data) {
-        //     if (data[i].time === samp.begin_time) {
-        //       dataI = i;
-        //       break;
-        //     }
-        //   }
-        //   if (!keys.includes(samp.field)) {
-        //     keys.push(samp.field);
-        //   }
-        //
-        //   if (dataI !== -1) {
-        //     data[dataI][samp.field] = samp.visits;
-        //   } else {
-        //     let v = {};
-        //     v.time = samp.begin_time;
-        //     v[samp.field] = samp.visits;
-        //     data.push(v);
-        //   }
-        // }
-
         let d = resp.sample;
 
         let rowhead = ['time'];
-
         for (const p of d) {
-          if (!rowhead.includes(p.field)) {
+          if (!rowhead.includes(p.field))
             rowhead.push(p.field);
-          }
         }
+
         let rows = [rowhead];
         for (const p of d) {
           let foundrow = false;
@@ -119,17 +94,17 @@ export default {
           typesAllArea[rowhead[i]] = 'area';
         }
 
-        this.chartPreferencesAnalysis.load({
+        this.theChart.load({
           rows: rows,
           types: typesAllArea
         });
 
-        this.chartPreferencesAnalysis.groups([rowhead.slice(1)]);
+        this.theChart.groups([rowhead.slice(1)]);
       });
     },
     setup() {
 
-      this.chartPreferencesAnalysis = c3.generate({
+      this.theChart = c3.generate({
         bindto: '#chart-preferences-analysis',
         data: {
           x: 'time',
@@ -167,6 +142,20 @@ export default {
 
     }
 
+  },
+  mounted() {
+
+
+  },
+  watch: {
+
+    useSubchart(to) {
+
+      if (to)
+        this.theChart.subchart.show();
+      else
+        this.theChart.subchart.hide();
+    }
   }
 }
 </script>
