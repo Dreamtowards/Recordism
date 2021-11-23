@@ -72,6 +72,24 @@
 }
 
 
+tspan {
+    fill: rgb(136 136 136);
+    font-size: 12px;
+}
+.domain, .tick line {
+    stroke: none!important;
+}
+
+.c3-circle {
+    stroke: white;
+    stroke-width: 1px;
+}
+.c3-line {
+    stroke-width: 2px!important;
+}
+.c3-area {
+    opacity: 0.3!important;
+}
 
 .leaflet-control-layers-selector {
     display: inline-block!important;

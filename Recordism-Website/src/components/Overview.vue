@@ -41,9 +41,6 @@ import StatisticsPanel from "./widgets/StatisticsPanel.vue";
 
 
 
-import "../assets/css/c3.css";
-import "../assets/js/c3.js";
-
 export default {
   name: "Overview",
   props: {"site_id": Number},

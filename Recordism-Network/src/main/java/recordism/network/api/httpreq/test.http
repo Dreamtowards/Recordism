@@ -4,6 +4,6 @@ Content-Type: application/json; charset=utf-8
 Cache-Control: no-cache
 
 {
-  "interval": 10000
+  "interval": 10000000
 }
 ###

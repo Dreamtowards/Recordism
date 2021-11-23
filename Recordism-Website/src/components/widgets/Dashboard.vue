@@ -1,10 +1,10 @@
 <template>
   <div class="thumbnail border-bottom-0 p-0" style="border-bottom-left-radius: 0; border-bottom-right-radius: 0;">
     <div class="p-3 border-bottom">
-      <select class="btn w-auto float-end ms-2 px-2" style="margin-top: -4px;appearance: auto;" @change="switchPanel($event.target.selectedIndex)">
-        <option>Geolocation Heatmap</option>
-        <option>Audience Visitations</option>
-        <option>Preferences Analysis</option>
+      <select class="btn w-auto float-end ms-2 px-2" style="margin-top: -4px;appearance: auto;" v-model="currentPanel">
+        <option value="0">Geolocation Heatmap</option>
+        <option value="1">Audience Visitations</option>
+        <option value="2">Preferences Analysis</option>
 <!--        <option>Geolocation</option>-->
 <!--        <option title="Pages, Referrers">Pages & Sources</option>-->
 <!--        <option title="Browser Primary Language, Browser Timezone, IP Timezone">Language & Timezone</option>-->
@@ -76,8 +76,8 @@
 <!--        </div>-->
       </div>
       <div>
-        <div id="chart-overview" class="mt-3" style="height: 220px;"></div>
-        <div class="d-block float-end me-3 btn-group" style="margin-top: -226px;">
+        <div id="chart-audience-visitations" class="mt-4 me-4 ms-2 pb-1" style="height: 220px;"></div>
+        <div class="d-block float-end me-3 btn-group" style="margin-top: -240px;">
           <select style="width: 100px;" title="Interval" @change="requestSiteAudienceVisitations" v-model="audivistIntervalSec">
             <option :value="60*60">1 hour</option>
             <option :value="60*60*8">8 hours</option>
@@ -90,40 +90,7 @@
         </div>
       </div>
       <div>
-        <div id="chart-pages" class="mt-3" style="height: 320px;"></div>
-        <div class="d-block float-end me-3" style="margin-top: -330px;position: relative;">
-          <div class="d-inline-block btn-group">
-            <button class="btn">Visits</button>
-            <button class="btn">Visitors</button>
-          </div>
-          <select style="width: 100px;" class="btn align-top" title="Interval" @change="requestSitePreferencesAnalysis" v-model="prefanalIntervalSec">
-            <option :value="60*60">1 hour</option>
-            <option :value="60*60*8">8 hours</option>
-            <option :value="60*60*24">1 day</option>
-            <option :value="60*60*24*7">7 days</option>
-            <option :value="60*60*24*30">1 month</option>
-            <option :value="60*60*24*30*3">3 months</option>
-            <option :value="60*60*24*30*12">1 year</option>
-          </select>
-          <select class="btn align-top" style="width: auto;">
-            <option>Country</option>
-            <option>Region</option>
-            <option>City</option>
-            <option>IP Timezone</option>
-            <option>ISP</option>
-            <option>Browser Vendor</option>
-            <option>Browser Timezone</option>
-            <option>Browser Language</option>
-            <option>Device Platform</option>
-            <option>Operation System</option>
-            <option>Browser</option>
-            <option>Title</option>
-            <option>URL</option>
-            <option>Referrer URL</option>
-            <option>IP</option>
-            <option>CookieID</option>
-          </select>
-        </div>
+        <audience-preferences-analysis></audience-preferences-analysis>
       </div>
       <div>
         Language and Timezone
@@ -140,19 +107,26 @@
 import {request} from "../../main";
 
 import {utTextDurationTimeText} from "../../ut_parse";
-import IntervalInput from "./IntervalInput.vue";
+
+
+
+import "../../assets/css/c3.css";
+import c3 from "../../assets/js/c3.js";
+
+
+import AudiencePreferencesAnalysis from "./AudiencePreferencesAnalysis.vue";
+
 
 export default {
   name: "Dashboard",
-  components: {IntervalInput},
+  components: {AudiencePreferencesAnalysis},
   data() {return {
     initializedPanels: [],
     showAdvancedSearch: false,
     presetSearchMode: 2,
-    uiChartVisitsLine: undefined,
-    uiChartPrefAnalysis: undefined,
-    prefanalIntervalSec: 60*60,
+    chartAudienceVisitations: undefined,
     audivistIntervalSec: 60*60,
+    currentPanel: 0,
   }},
   methods: {
 
@@ -164,9 +138,9 @@ export default {
       pb.children.item(idx).style.display = 'block';
 
       const initFunc = [
-        this.setupAudienceMap,
-        this.setupChartAccessOverview,
-        this.setupChartPages,
+        this.setupGeolocationMap,
+        this.setupAudienceVisitations,
+        this.setupPreferencesAnalysis,
         alert,
         alert
       ];
@@ -176,7 +150,7 @@ export default {
       }
     },
 
-    setupAudienceMap() {
+    setupGeolocationMap() {
 
       var ltOSM = new L.TileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {});
       var ltMapbox = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoiY2x1c3RybWFwcyIsImEiOiJjaXEwbG9hZXowMDByaHJuZDU0dDU0cDZ0In0.RDTRO6skanUfOnb6eijYEA', {});
@@ -236,108 +210,107 @@ export default {
 
     },
 
+
+
+
     requestSiteAudienceVisitations() {
 
       request("/site_audience_visitations", {
         interval: 1000*this.audivistIntervalSec
       }, resp => {
 
-        this.uiChartVisitsLine.setData(resp.sample);
+        // let d = [
+        //   {time: 1, visitors: 1, visits: 10},
+        //   {time: 2, visitors: 1, visits: 10},
+        //   {time: 3, visitors: 1, visits: 10}
+        // ];
+        // let row = [
+        //     ['time', 'visits', 'visitors']
+        // ];
+        // for (const d of resp.sample) {
+        //   row.push([d.begin_time-100000000000, d.visits, d.visitors]);
+        // }
+
+        this.chartAudienceVisitations.load({
+          json: resp.sample,
+          keys: {
+            x: 'begin_time',
+            value: ['visits', 'visitors']
+          }
+        })
       });
     },
-    setupChartAccessOverview() {
+    setupAudienceVisitations() {
 
-      this.uiChartVisitsLine = new Morris.Line({
-        element: 'chart-overview',
-        data: [],
-        xkey: 'begin_time',
-        ykeys: ['visits', 'visitors'],//, 'online_viewers', 'online_pages'],
-        labels: ['Page Views', 'Unique Viewers'],//, 'Online Viewers', 'Online Pages'],
-        hideHover: 'auto',
-        lineColors: ['#62ff37', '#67d029'],//, '#fc4040', '#a82e2e'],
-        lineWidth: [2.5, 1.5],//, 2.5, 1.5]
+      this.chartAudienceVisitations = c3.generate({
+        bindto: '#chart-audience-visitations',
+        data: {
+          // x: 'begin_time',
+          // xFormat: null,
+          // rows: [['time']],
+          json: [],
+          keys: {
+            x: 'begin_time',
+            value: []
+          },
+          types: {
+            // visitors: 'line',
+            // visits: 'line'
+          }
+        },
+        axis: {
+          x: {
+            type: 'timeseries',
+            tick: {
+              format: '%Y-%m-%d\n%H:%M:%S',
+              // count: 2,
+              rotate: 0,
+            },
+          },
+          y: {
+            // tick: {count: 5},
+            // padding: { top: 0, bottom: 0,},
+          }
+        },
+        zoom: {
+          enabled: true,
+          rescale: false
+        },
+        grid: {
+          y: {show: true}
+        },
+        // subchart: {
+        //   show: true
+        // }
       });
 
       this.requestSiteAudienceVisitations();
 
     },
 
-    requestSitePreferencesAnalysis() {
-
-      request("/site_preferences_analysis", {
-            interval: 1000*this.prefanalIntervalSec
-          }, resp => {
-
-        let data = [];
-        let keys = [];
-
-        for (let samp of resp.sample) {
-          let dataI = -1;  // existed.
-          for (let i in data) {
-            if (data[i].time === samp.begin_time) {
-              dataI = i;
-              break;
-            }
-          }
-          if (!keys.includes(samp.field)) {
-            keys.push(samp.field);
-          }
-
-          if (dataI !== -1) {
-            data[dataI][samp.field] = samp.visits;
-          } else {
-            let v = {};
-            v.time = samp.begin_time;
-            v[samp.field] = samp.visits;
-            data.push(v);
-          }
-        }
-
-        // if (this.uiChartPrefAnalysis)
-        //     this.uiChartPrefAnalysis.remove();
-        this.uiChartPrefAnalysis = new Morris.Area({
-          element: 'chart-pages',
-          data: data,
-          xkey: 'time',
-          ykeys: keys,
-          labels: keys,
-          hideHover: 'auto',
-        });
-
-      });
-    },
-    setupChartPages() {
 
 
 
-      this.requestSitePreferencesAnalysis();
-
-        // new Morris.Area({
-        //   element: 'chart-pages',
-        //   data: [
-        //     {time: '1000', page1: 30, page2: 60},
-        //     {time: '1100', page1: 40},
-        //     {time: '1300', page1: 80, page2: 40}
-        //   ],
-        //   xkey: 'time',
-        //   ykeys: ['page1', 'page2'],
-        //   labels: ['Z1', 'Page2'],
-        //   hideHover: 'auto',
-        // });
-
-    }
 
   },
   mounted() {
 
-    // this.setupAudienceMap();
-    //
-    // this.setupChartAccessOverview();
-    //
-    // this.setupChartPages();
 
-    this.switchPanel(0);
 
+    this.currentPanel = 2;
+  },
+  watch: {
+    currentPanel(to) {
+
+      this.switchPanel(to);
+    },
+    prefanalUseSubchart(to) {
+
+      if (to)
+        this.chartPreferencesAnalysis.subchart.show();
+      else
+        this.chartPreferencesAnalysis.subchart.hide();
+    }
   }
 }
 </script>
