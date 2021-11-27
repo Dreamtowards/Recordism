@@ -4,6 +4,10 @@ Content-Type: application/json; charset=utf-8
 Cache-Control: no-cache
 
 {
-  "interval": 10000000
+  "interval": 10000000,
+  "interval_slices_limit": 20,
+  "counting": "visits",
+  "category": "country",
+  "category_items_limit": "10"
 }
 ###

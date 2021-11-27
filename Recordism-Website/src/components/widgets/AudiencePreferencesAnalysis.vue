@@ -13,34 +13,43 @@
       <option :value="60*60*24*30*3">3 months</option>
       <option :value="60*60*24*30*12">1 year</option>
     </select>
-    <select style="width: auto;" class="btn align-top" title="Target" @change="requestSitePreferencesAnalysis">
-      <option>Visits</option>
-      <option>Visitors by IP</option>
-      <option>Visitors by CID</option>
+    <select style="width: auto;" class="btn align-top" title="Counting" v-model="selCounting" @change="requestSitePreferencesAnalysis">
+      <option value="visits">Visits</option>
+      <option value="visitors">Visitors</option>
     </select>
-    <select class="btn align-top" style="width: auto;">
-      <option>Country</option>
-      <option>Region</option>
-      <option>City</option>
-      <option>IP Timezone</option>
-      <option>ISP</option>
-      <option>Browser Vendor</option>
-      <option>Browser Timezone</option>
-      <option>Browser Language</option>
-      <option>Device Platform</option>
-      <option>Operation System</option>
-      <option>Browser</option>
-      <option>Title</option>
-      <option>URL</option>
-      <option>Referrer URL</option>
-      <option>IP</option>
-      <option>CookieID</option>
+    <select class="btn align-top" style="width: auto;" title="Category" v-model="selCategory" @change="requestSitePreferencesAnalysis">
+      <option value="country">Country</option>
+      <option value="region">Region</option>
+      <option value="city">City</option>
+      <option value="isp">ISP</option>
+
+      <option value="browser_timezone">Browser Timezone</option>
+      <option value="browser_language">Browser Language</option>
+      <option value="ip_timezone">IP Timezone</option>
+
+      <option value="browser_vendor">Browser Vendor</option>
+      <option value="device_platform">Device Platform</option>
+      <option value="operation_system">Operation System</option>
+      <option value="browser_model">Browser</option>
+
+      <option value="window_title">Title</option>
+      <option value="window_url">URL</option>
+      <option value="window_referrer_url">Referrer URL</option>
+
+<!--      <option>IP</option>-->
+<!--      <option>CookieID</option>-->
     </select>
   </div>
 </div>
 </template>
 
 <script>
+
+// for Visitors, is by IP, or by Cookie ID.?
+// default should be by IP, it's traditional way, also be most-expected behavior.
+// Cookie ID is kind-of-radical way, may not expected. also may not really accurate.
+
+
 import {request} from "../../main";
 import c3 from "../../assets/js/c3";
 
@@ -49,44 +58,44 @@ export default {
   data() {return {
     intervalSec: 60*60,
     useSubchart: false,
-    theChart: undefined
+    theChart: undefined,
+    selCounting: 'visits',
+    selCategory: 'country',
+    lastRowHead: [],
   }},
   methods: {
-
 
     requestSitePreferencesAnalysis() {
 
       request("/site_preferences_analysis", {
-        interval: 1000*this.intervalSec
+        interval: 1000*this.intervalSec,
+        interval_slices_limit: 20,
+        counting: this.selCounting,
+        category: this.selCategory,
+        category_items_limit: 12
       }, resp => {
-        let d = resp.sample;
+        let samps = resp.sample;
 
         let rowhead = ['time'];
-        for (const p of d) {
-          if (!rowhead.includes(p.field))
-            rowhead.push(p.field);
+        for (const keyTime in samps) {
+          for (const item of samps[keyTime]) {
+            if (!rowhead.includes(item.item))
+              rowhead.push(item.item);
+          }
         }
 
         let rows = [rowhead];
-        for (const p of d) {
-          let foundrow = false;
-          for (const row of rows) {
-            if (row[0] === p.begin_time) {
-              row[rowhead.indexOf(p.field)] = p.visits;
-              foundrow = true;
-              break;
-            }
-          }
+        for (const keyTime in samps) {
 
-          if (!foundrow) {
-            let row = [];
-            for (let i = 0; i < rowhead.length; i++) {
-              row[i] = 0;
-            }
-            row[0] = p.begin_time;
-            row[rowhead.indexOf(p.field)] = p.visits;
-            rows.push(row);
+          let r = [];
+          for (let i in rowhead)
+            r[i] = 0;
+
+          r[0] = parseInt(keyTime);
+          for (const item of samps[keyTime]) {
+            r[rowhead.indexOf(item.item)] = item.count;
           }
+          rows.push(r);
         }
 
         let typesAllArea = {};
@@ -96,9 +105,11 @@ export default {
 
         this.theChart.load({
           rows: rows,
-          types: typesAllArea
+          types: typesAllArea,
+          unload: this.lastRowHead
         });
 
+        this.lastRowHead = rowhead;
         this.theChart.groups([rowhead.slice(1)]);
       });
     },

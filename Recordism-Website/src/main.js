@@ -63,11 +63,13 @@ function request(path, data, respf, errf, lcall = ()=>{}) {
             // console.log("request(responsed). \npath:"+path+", data:"+JSON.stringify(data)+", \nresp:"+JSON.stringify(resp.data));
             respf(resp.data);
         }).catch(ex => {
+            if (errf == null) {
+                errf = err=>showToast("Error: "+err.message)
+            }
             if (ex.response) {
-                if (errf == null) {
-                   errf = err=>showToast("Error: "+err.message)
-                }
                 errf(ex.response.data);
+            } else {
+                errf(ex);
             }
         }).then(() => {
             lcall();

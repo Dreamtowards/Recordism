@@ -1,6 +1,9 @@
 package recordism.network.api;
 
+import org.hibernate.Session;
+import org.hibernate.query.Query;
 import org.json.JSONArray;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import recordism.network.dao.*;
 import recordism.network.dao.model.*;
 import recordism.network.externalutil.CollectionUtils;
@@ -14,6 +17,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.web.bind.annotation.*;
 
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.PersistenceContext;
 import javax.persistence.criteria.*;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
@@ -329,13 +335,85 @@ public class RestMain {
         );
     }
 
+    @Autowired
+    private EntityManager entityManager;
+
     @RequestMapping("site_preferences_analysis")
     public Map<String, Object> siteVisitsPref(@RequestBody Map<String, Object> _d) { JSONObject data = new JSONObject(_d);
 
         long interval = data.getLong("interval");
+        int intervalSlicesLimit = data.getInt("interval_slices_limit");
+
+        String counting = data.getString("counting");
+
+        String category = data.getString("category");
+        int categoryItemsLimit = data.getInt("category_items_limit");
+
+//        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+//
+//        CriteriaQuery<?> cq = cb.createQuery();
+//        Root<?> r = cq.from(AccessRecord.class);
+//
+//        cq.multiselect();
+//
+//        entityManager.createQuery(cq).getResultList();
+
+
+        String qlCountingDest;
+        if (counting.equals("visits")) qlCountingDest = "a.id";
+        else if (counting.equals("visitors")) qlCountingDest = "DISTINCT a.ip";
+        else throw new IllegalStateException("Illegal enum for 'counting'");
+
+
+        String qlItemField;
+        switch (category) {
+        case "country": qlItemField = "i.country"; break;
+        case "region": qlItemField = "i.region"; break;
+        case "city": qlItemField = "i.city"; break;
+        case "isp": qlItemField = "i.isp"; break;
+        case "ip_timezone": qlItemField = "i.timezone"; break;
+        case "browser_timezone": qlItemField = "a.browserTimezone"; break;
+        case "browser_language": qlItemField = "a.browserLanguage"; break;
+        case "browser_vendor": qlItemField = "a.browserVendor"; break;
+        case "device_platform": qlItemField = "a.devicePlatform"; break;
+        case "window_title": qlItemField = "a.windowTitle"; break;
+        case "window_url": qlItemField = "a.windowUrl"; break;
+        case "window_referrer_url": qlItemField = "a.windowReferrerUrl"; break;
+        default: throw new IllegalStateException("Illegal enum for 'category'");
+        }
+        // Operation System
+        // Browser
+
+
+        List<Object[]> rs = entityManager.createQuery(
+                "SELECT FLOOR(a.time/"+interval+"L)*"+interval+"L AS time, "+qlItemField+" AS item, COUNT("+qlCountingDest+") AS count " +
+                        "FROM AccessRecord a, IpInfo i " +
+                        "WHERE a.ip = i " +
+                        "GROUP BY time, item").getResultList();
+
+        /** samples: {
+         *     "2301983019230": [
+         *      {item: 'Good', count 1}
+         *     ]
+         * }  */
+        JSONObject samps = new JSONObject();
+        for (Object[] row : rs) {
+            long time = (long)row[0]; String sTime = String.valueOf(time);
+            String item = (String)row[1];
+            long count = (long)row[2];
+            JSONObject el = new JSONObject(CollectionUtils.asMap(
+                    "item", item,
+                    "count", count));
+
+            if (samps.has(sTime)) {
+                samps.getJSONArray(sTime).put(el);
+            } else {
+                samps.put(sTime, new JSONArray().put(el));
+            }
+        }
 
         return CollectionUtils.asMap(
-                "sample", siteRepository.queryPreferencesAnalysis(interval)
+                "sample", samps.toMap()
         );
     }
 
