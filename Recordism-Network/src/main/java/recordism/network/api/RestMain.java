@@ -25,6 +25,8 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.*;
 
+import static recordism.network.api.Util.isBlank;
+
 @RestController
 @CrossOrigin("*")
 @RequestMapping(value = "/api/", method = RequestMethod.POST)
@@ -95,6 +97,12 @@ public class RestMain {
         r.windowTitle = dwindow.getString("title");
         r.windowUrl = dwindow.getString("url");
         r.windowReferrerUrl = dwindow.optString("referrer_url");
+
+        // Cached makeup
+        r.cachedWindowPath = Util.urlToPath(r.windowUrl);
+        r.cachedWindowReferrerPath = Util.urlToPath(r.windowReferrerUrl);
+        r.cachedScreenResolutionLevel = Util.resolutionLevelName(r.screenWidth, r.screenHeight);
+        r.cachedBrowserModel = ;
 
         // Check and Save IP Info.
         IpInfo ipInfo = ipRepository.findByIp(remoteIp);
@@ -415,10 +423,6 @@ public class RestMain {
         return CollectionUtils.asMap(
                 "sample", samps.toMap()
         );
-    }
-
-    public static boolean isBlank(String s) {
-        return s==null || s.isEmpty();
     }
 
 }

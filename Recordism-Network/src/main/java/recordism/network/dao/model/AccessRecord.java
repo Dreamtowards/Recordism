@@ -55,4 +55,11 @@ public class AccessRecord {
     public String windowUrl;
     public String windowReferrerUrl;
 
+    public String cachedWindowPath;
+    public String cachedWindowReferrerPath;
+    public String cachedScreenResolutionLevel;
+    public String cachedBrowserModel;
+    public String cachedOperationSystem;
+
+
 }
